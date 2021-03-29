@@ -1,0 +1,168 @@
+;*****************************************************************
+;* This stationery serves as the framework for a                 *
+;* user application (single file, absolute assembly application) *
+;* For a more comprehensive program that                         *
+;* demonstrates the more advanced functionality of this          *
+;* processor, please see the demonstration applications          *
+;* located in the examples subdirectory of the                   *
+;* Freescale CodeWarrior for the HC12 Program directory          *
+;*****************************************************************
+
+; export symbols
+            XDEF Entry, _Startup            ; export 'Entry' symbol
+            ABSENTRY Entry        ; for absolute assembly: mark this as application entry point
+
+
+
+; Include derivative-specific definitions 
+		INCLUDE 'derivative.inc' 
+
+ROMStart    EQU  $4000  ; absolute address to place my code/constant data
+
+; variable/data section
+
+      ORG RAMStart
+ ; Insert here your data definition.
+
+
+string          FCC "this string is whatever i want it to be"
+string_end        equ $0D
+string_length     equ $13
+
+read_string DS.B  16
+
+CarRet equ $0D
+
+
+; code section
+     ORG   ROMStart
+
+ Entry:
+_Startup:
+            LDS   #RAMEnd+1       ; initialize the stack pointer
+
+            CLI                     ; enable interrupts
+
+            
+            
+            BRA readStringStart
+
+;Main Write
+delay:
+             DECA            ;One clock cycle
+             BNE delay       ;Four clock cycles
+             RTS 
+
+
+
+
+writeStringStart:
+            
+              PSHX
+              PSHY
+              PSHA
+              PSHB
+              CLRA
+              LDX #string
+              LDY #string_length
+             
+              LDAB #%10011101     ;Baud Rate
+              STAB SCI1BDL         
+             
+              LDAB #%00000000
+              STAB SCI1CR1
+              
+              
+              LDAB #%00000000
+              STAB SCI1CR2
+              
+
+writeString:
+      
+              LDAB SCI1SR1
+              ANDB #%10000000 
+              BEQ writeString
+              
+              
+              
+              LDAA 1,x+
+              STAA SCI1DRL
+    
+              BSR pushString
+    
+              CMPA #$5A
+              BEQ finishWrite
+               
+
+              
+              
+              
+
+              
+              BRA writeString
+
+          
+pushString:  
+             
+             
+              LDAB #%00001000
+              STAB SCI1CR2
+              
+              RTS       
+
+
+
+
+finishWrite:
+              LDAA 1,x+
+              STAA SCI1DRL
+    
+              BSR pushString
+    
+              LDAA #CarRet
+              STAA SCI1DRL
+              LDAB #%00001000
+              STAB SCI1CR2
+              PULB
+              PULA
+              PULY
+              PULX
+              
+         
+;------------------------------------------------------------------
+
+readStringStart:
+              
+            PSHX
+            PSHY            
+            PSHA
+            PSHB
+
+            LDAB #%00110100
+            STAB SCI1CR2
+           
+            LDY #read_string
+           
+           
+readStringLoop:
+            
+            BRA readStringLoop
+            
+
+readString:
+            LDAA SCI1DRL
+            STAA 0,y           
+            INY
+            BRA readStringLoop
+            
+            
+            
+
+;**************************************************************
+;*                 Interrupt Vectors                          *
+;**************************************************************
+            ORG   $FFD6
+            FDB   readString
+            
+            ORG   $FFFE
+            DC.W  Entry           ; Reset Vector
