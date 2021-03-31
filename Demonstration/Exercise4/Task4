@@ -2,8 +2,11 @@
 1. Create a look-up table - with a decimal number array 0,1,2,3,4,5,6,7,8,9; and a hex value array to send to the 7-Seg: $3F, $3F, $06, $5B, $4F, $66, $6D, $7D, $07, $7F, $6F
 2. Have the user input numbers which will be received by the serial. These will be inputted decimal form, i.e the number array.
         3. Function using the look up table to convert from the actual number to the corresponding hex value for the 7-seg display.
-                    -Point to the inputted 
-                    4. Store the hex values into a separate array
-        5. This array with the hex values in order will be looped through using a stack pointer.
-                5. Each time a number is pointed to, it will be displayed in one of the segments, accompanied by a delay.
-                6. This process will be repeated so that the segments will be displayed long enough for the naked eye to see.
+                    -Point to the inputted decimal number in the decimal number array and note its position in the array
+                    -Then load the hex value at corresponding position in the hex value array
+                    -Store these hex values into a separate array
+                    -Repeat this for each decimal number inputted
+        4. This array with the hex values in order will be looped through using a stack pointer. i.e exercise 2 task 5
+                    -Each time a number is pointed to, it will be displayed in one of the segments, accompanied by a delay.
+                    -If there are more than 4 numbers inputted, a buffer and starting hex value array pointer will be used scroll through the numbers on the display
+                    -This process will be repeated so that the segments will be displayed long enough for the naked eye to see.
