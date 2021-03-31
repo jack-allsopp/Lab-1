@@ -4,7 +4,9 @@ Jack Allsopp
 James Calfas
 Yujiao Cao
 
+
 Exercise 1: Memory and pointers
+commited by: Jack Allsopp, James Calfas, Yujiao Cao
 
 In this exercise we need to alter the case of the characters of a pre-defined string stored in memory. All the tasks are combined in one file named “Exercise 1”. In the ASCII table we can check that the difference between an uppercase character and a lowercase character is $20, which is: Upper - $20 = Lower. And the middle value for checking if it is higher or lower is $60, space character is $20 and a full stop is $56.
 Task 1 & 2
@@ -33,6 +35,7 @@ At the end of the “innerLoop”, choose the desired routine from the four main
 
 
 Exercise 2: Digital Input/Output
+commited by: James Calfas, Yujiao Cao
 
 This exercise configures the 7-segment display on the board to display desired information.
 The 5 tasks are interpretated in separate files: 
@@ -90,6 +93,7 @@ Under the function “check_number_array_position”, after command “cmpb”, 
 
 
 Exercise 3: Serial Input/Output
+commited by: Jack Allsopp
 
 This section focuses on the SCI1 of the board and the interaction between the Terminal (User Input) and the board. All the tasks are combined in on file called “Exercise 3”
 Task 1
@@ -114,6 +118,7 @@ If reading from the serial port is desired, input “readStringStart” after �
 
 
 Exercise 4: Integration Task
+commited by: Jack Allsopp, James Calfas, Yujiao Cao
 
 This section takes the string input from the serial port, and polls the PH0 to choose the desired routine, whether to change all the letters to uppercase or only the letters after a space.
 If PH0 is 1 (DIP 8 on), the routine will be to capitalise the letter after a space; If PH0 is 0 (DIP 8), the routine will be to capitalise every letter.
