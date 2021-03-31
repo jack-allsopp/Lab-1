@@ -1,0 +1,257 @@
+;*****************************************************************
+;* This stationery serves as the framework for a                 *
+;* user application (single file, absolute assembly application) *
+;* For a more comprehensive program that                         *
+;* demonstrates the more advanced functionality of this          *
+;* processor, please see the demonstration applications          *
+;* located in the examples subdirectory of the                   *
+;* Freescale CodeWarrior for the HC12 Program directory          *
+;*****************************************************************
+
+; export symbols
+            XDEF Entry, _Startup            ; export 'Entry' symbol
+            ABSENTRY Entry        ; for absolute assembly: mark this as application entry point
+
+
+
+; Include derivative-specific definitions 
+		INCLUDE 'derivative.inc' 
+
+ROMStart    EQU  $4000  ; absolute address to place my code/constant data
+
+; variable/data section
+
+      ORG RAMStart
+ ; Insert here your data definition.
+
+
+output_string          DS.B 50
+string_end        equ $0D
+string_length     equ $13
+middle_value      EQU $60    ; value between low and high
+change_value    EQU $20
+
+
+new_string DS.B  50
+;old_string FCC "This is an old String"
+
+CarRet equ $0D
+
+
+; code section
+     ORG   ROMStart
+
+ Entry:
+_Startup:
+            LDS   #RAMEnd+1       ; initialize the stack pointer
+
+            CLI                     ; enable interrupts
+
+            MOVB #%10011101,SCI1BDL     ;Baud Rate   
+           
+            LDY #$00
+            CLR new_string
+            CLRA
+            CLRB
+            BRA readStringStart
+
+
+;Main Write
+
+;------------------------------------------------------------------
+
+readStringStart:
+            
+           
+         
+            LDX #new_string    ;load new string to write to
+            LDAB #$00 
+            
+            MOVB #%00100000, SCI1CR1    ;reciever bit
+             
+            MOVB #%00001100, SCI1CR2    ;reciever bit
+             
+            BRA readStringPoll
+
+readStringPoll:
+         
+           LDAB SCI1SR1
+           ANDB #%00100000 
+           BEQ readStringPoll
+              
+
+readString:               
+           LDAA SCI1DRL         ;get letter
+           CMPA #$0D             ;check carriage
+           BEQ mainLoop  ;leave if carriage
+           STAA 0,x              ;store
+           INX                   ;increment
+           BRA readStringPoll
+
+
+
+            
+;------------------------------------------------------------------
+
+
+mainLoop:
+      
+            LDAA #$00
+            LDX   #new_string
+            LDY   #output_string
+            staa PTJ
+            staa DDRH
+
+innerLoop:    
+            LDAB  1, x+          ;Load next letter
+            
+            ldaa PTH
+            cmpa #$FE
+            
+            BNE   TWOmakeHigher
+            
+            BEQ   THREEfirstLetter      ;Branch always to chosen Routine (choose Routine here) 
+
+
+TWOmakeHigher:                    ;Make all upercase
+            CMPB #$20                ;check if loaded letter is a space
+            BEQ comeBack             ;if so write it to output
+            CMPB #$2E                ;check if loaded letter is a fullstop
+            BEQ comeBack             ;if so write it to output
+            CMPB #middle_value        ;compare letter to middle value
+            BHI makeHigher           ;make letter uppercase if lowercase
+            BRA comeBack
+
+
+THREEfirstLetter:                    ;Make the first Letter of each word uppercase
+            CMPA #$00                ;Test if the count of the string length is at the start (very first letter)
+            BEQ TWOmakeHigher         ;If so send to 2nd function to test if it is Uppercase
+            CMPB #$20                ;check if letter is a space
+            BEQ newWord              ;If so go to new word function
+            CMPB #$2E                ;Check for fullStop
+            BEQ comeBack             ;Return if fullstop
+            CMPB #middle_value        ;Check if uppercase
+            BLO makeLower            ;make all the other letters that are uppercase into lowercase
+            BRA comeBack 
+
+makeHigher:
+            SUBB #change_value     ;Subtract 20 from the ascii value of the lowercase letter to make it uppercase
+            BRA comeBack             ;return
+
+
+            
+makeLower:          
+            ADDB #$20    ;Add 20 to the ascii value of the uppercase letter to make it lowercase
+            BRA comeBack  
+
+newWord:                         ;Make the first letter after a space an Uppercase letter
+            BSR nextCharacter      ;Store the current Character and move to the next
+            LDAB 1,x+              ;load next letter
+            CMPB #middle_value      ;Compare to middle value
+            BHI makeHigher         ;make higher if necesary
+            BRA comeBack
+            
+            
+nextCharacter:                       ;Quick store in output string without returning to start
+            STAB 0,y                      ;Store in ouput string y
+            INY                           ;Increment the ouput string
+            DECA                          ;Decrease letter count
+            RTS       
+
+comeBack:                        ;Write to output
+            CMPB #$5A
+            BEQ  writeStringStart
+            STAB  0, y                ;Store the B value in Y
+            INCA                      ;Decrease letter count
+            CMPB  #$0D                
+            BEQ  writeStringStart               ;If 0 finish
+            INY                       ;Move to next letter in output string
+            BRA innerLoop
+
+;------------------------------------------------------------------
+
+
+writeStringStart:
+            
+             
+              CLRA
+              LDX #$00
+              LDX #output_string
+                 
+             
+              MOVB #%00100000,SCI1CR1
+              
+              MOVB #%00000000,SCI1CR2
+               
+              
+
+writeString:
+      
+              LDAB SCI1SR1
+              ANDB #%10000000 
+              BEQ writeString
+            
+              
+              
+              LDAA 1,x+                   ;load next value
+              
+                            
+              
+
+              
+              CMPA #$5A                    ;check Z
+              BEQ finishWrite
+              
+              CMPA #$0D                    ;check carriage
+              BEQ finishWrite
+              
+              STAA SCI1DRL 
+              MOVB #%00001100,SCI1CR2      ;push to serial
+            
+ transmit:    
+              LDAB SCI1SR1
+              ANDB #%01000000 
+              BEQ transmit
+                          
+              
+                          
+              BRA writeString
+
+
+
+
+finishWrite:
+            
+    
+              MOVB #CarRet,SCI1DRL
+
+              MOVB #%00001100, SCI1CR2
+             
+              LDY #$01
+transmitagain:    
+              LDAB SCI1SR1
+              ANDB #%01000000 
+              BEQ transmitagain
+              BRA finish               
+             
+
+
+
+
+
+
+
+            
+finish:
+
+
+                   
+            
+
+;**************************************************************
+;*                 Interrupt Vectors                          *
+;**************************************************************
+
+
+            ORG   $FFFE
+            DC.W  Entry           ; Reset Vector
