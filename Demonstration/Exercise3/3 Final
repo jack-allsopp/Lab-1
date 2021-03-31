@@ -144,7 +144,7 @@ readStringPoll:
            
            LDAB SCI1SR1
            ANDB #%00100000 
-           BEQ return
+           BEQ readStringPoll
               
 
 readString:               
